@@ -1,0 +1,111 @@
+`timescale 1ns / 1ps
+
+module tb_adder;
+  logic [31:0] a;
+  logic [31:0] b;
+  logic [31:0] out;
+  logic carry;
+
+  int pass_count = 0;
+  int fail_count = 0;
+
+  adder uut (
+      .a(a),
+      .b(b),
+      .out(out),
+      .carry(carry)
+  );
+
+  // --- Helper to check the output, given inputs ---
+  task automatic check(input logic [31:0] a, input logic [31:0] b, input logic [31:0] out_expected,
+                       input logic [31:0] out_actual, input logic carry_expected,
+                       input logic carry_actual);
+    if (out_actual !== out_expected) begin
+      $display("$FAIL: 0x%08x + 0x%08x = %0x08xc%b; expected %0x08xc%b", a, b, out_actual,
+               carry_actual, out_expected, carry_expected);
+      fail_count++;
+    end else begin
+      pass_count++;
+    end
+  endtask
+
+  initial begin
+    $dumpfile("sim/tb_adder.vcd");
+    $dumpvars(0, tb_adder);
+
+    a = 32'd0;
+    b = 32'd0;
+
+    // -----------------------------------------------------------------------
+    // Test 1: 1 + 1 = 2
+    // -----------------------------------------------------------------------
+    a = 32'd1;
+    b = 32'd1;
+    #1;
+    check(1, 1, 2, out, 0, carry);
+
+    // -----------------------------------------------------------------------
+    // Test 2: 0 + 1 = 1
+    // -----------------------------------------------------------------------
+    a = 32'd0;
+    b = 32'd1;
+    #1;
+    check(0, 1, 1, out, 0, carry);
+
+    // -----------------------------------------------------------------------
+    // Test 3: 2 + 0 = 2
+    // -----------------------------------------------------------------------
+    a = 32'd2;
+    b = 32'd0;
+    #1;
+    check(2, 0, 2, out, 0, carry);
+
+    // -----------------------------------------------------------------------
+    // Test 4: Upper bits, no carry
+    // -----------------------------------------------------------------------
+    a = 32'h80000000;
+    b = 32'h7fffffff;
+    #1;
+    check(32'h80000000, 32'h7fffffff, 32'hffffffff, out, 0, carry);
+
+    // -----------------------------------------------------------------------
+    // Test 5: Top bit carry
+    // -----------------------------------------------------------------------
+    a = 32'h80000000;
+    b = 32'h80000000;
+    #1;
+    check(32'h80000000, 32'h80000000, 32'h00000000, out, 1, carry);
+
+    // -----------------------------------------------------------------------
+    // Test 6: Ripple carry
+    // -----------------------------------------------------------------------
+    a = 32'hffffffff;
+    b = 32'h00000001;
+    #1;
+    check('hfffffff, 'h0000001, 'h00000000, out, 1, carry);
+
+    // -----------------------------------------------------------------------
+    // Test 7: Carry with remainder
+    // -----------------------------------------------------------------------
+    a = 32'hffffffff;
+    b = 32'h00000007;
+    #1;
+    check('hfffffff, 'h0000007, 'h00000006, out, 1, carry);
+
+    // -----------------------------------------------------------------------
+    // Summarise results
+    // -----------------------------------------------------------------------
+    #10;
+    $display("-----------------------------------------------------------------------");
+    $display("   %0d passed, %0d failed", pass_count, fail_count);
+    $display("-----------------------------------------------------------------------");
+    if (fail_count > 0) begin
+      $display("*** TEST FAILURES REPORTED ***");
+    end else begin
+      $display("All tests passed.");
+    end
+
+    $finish;
+  end
+
+endmodule

@@ -9,6 +9,7 @@ TB_TARGETS = $(patsubst $(TB_DIR)/tb_%.sv,$(SIM_DIR)/tb_%,$(TB_SRC))
 sim: $(TB_TARGETS)
 
 $(SIM_DIR)/tb_%: $(TB_DIR)/tb_%.sv $(RTL_SRC)
+	echo "$(TB_TARGETS)"
 	@mkdir -p $(SIM_DIR)
 	iverilog -g2012 -o $@ -I $(RTL_DIR) $< $(RTL_SRC)
 	vvp $@

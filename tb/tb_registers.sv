@@ -1,6 +1,6 @@
 `timescale 1ns / 1ps
 
-module tb_regfile;
+module tb_registers;
   logic clk;
   logic [4:0] rd_addr_a, rd_addr_b;
   logic [31:0] rd_data_a, rd_data_b;
@@ -40,8 +40,8 @@ module tb_regfile;
   endtask
 
   initial begin
-    $dumpfile("sim/tb_regfile.vcd");
-    $dumpvars(0, tb_regfile);
+    $dumpfile("sim/tb_registers.vcd");
+    $dumpvars(0, tb_registers);
 
     wr_en = 0;
     wr_addr = 5'd0;
