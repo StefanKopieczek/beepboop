@@ -31,7 +31,7 @@ module tb_registers;
                        input logic [31:0] actual);
 
     if (actual !== expected) begin
-      $display("$FAIL: x%0d port %s = 0x%08x, expected 0x%08x (t=%0t)", addr, port, actual,
+      $display("FAIL: x%0d port %s = 0x%08x, expected 0x%08x (t=%0t)", addr, port, actual,
                expected, $time);
       fail_count++;
     end else begin
@@ -58,6 +58,59 @@ module tb_registers;
     #1;
     check("A", rd_addr_a, 32'd0, rd_data_a);
     check("B", rd_addr_b, 32'd0, rd_data_b);
+
+    // -----------------------------------------------------------------------
+    // Test 2: Write to x1, read via A
+    // -----------------------------------------------------------------------
+    @(negedge clk);
+    wr_addr = 5'd1;
+    wr_data = 32'hdeadbeef;
+    wr_en   = 1;
+    @(posedge clk);
+    rd_addr_a = 5'd1;
+    #1;
+    check("A", rd_addr_a, 32'hdeadbeef, rd_data_a);
+
+    // -----------------------------------------------------------------------
+    // Test 3: Write to x31, read via B
+    // -----------------------------------------------------------------------
+    @(negedge clk);
+    wr_addr = 5'd31;
+    wr_data = 32'hcafebabe;
+    wr_en   = 1;
+    @(posedge clk);
+    rd_addr_b = 5'd31;
+    #1;
+    check("B", rd_addr_b, 32'hcafebabe, rd_data_b);
+
+    // -----------------------------------------------------------------------
+    // Test 4: Write-enable is respected
+    // -----------------------------------------------------------------------
+    @(negedge clk);
+    wr_addr = 5'd1;
+    wr_data = 32'hbeefcafe;
+    wr_en   = 1;
+    @(posedge clk);
+    #1;
+    wr_en = 0;
+    wr_data = 32'hbabecafe;
+    rd_addr_a = 5'd1;
+    @(posedge clk);
+    #1;
+    check("A", rd_addr_a, 32'hbeefcafe, rd_data_a);
+
+    // -----------------------------------------------------------------------
+    // Test 5: Writing to 0 does nothing
+    // -----------------------------------------------------------------------
+    @(negedge clk);
+    wr_addr = 5'd0;
+    wr_data = 32'hbabebabe;
+    wr_en   = 1;
+    @(posedge clk);
+    #1;
+    rd_addr_a = 5'd0;
+    #1;
+    check("A", rd_addr_a, 32'h0, rd_data_a);
 
     // -----------------------------------------------------------------------
     // Summarise results
