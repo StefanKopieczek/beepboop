@@ -1,0 +1,60 @@
+# .github/workflows/ci.yml
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Icarus Verilog
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y iverilog
+
+      - name: Run testbenches
+        run: |
+          make sim 2>&1 | tee sim.log
+          if grep -q "FAIL" sim.log; then
+            echo "::error::One or more testbenches reported FAIL"
+            exit 1
+          fi
+
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Verilator
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y verilator
+
+      - name: Run lint
+        run: make lint
+
+  format-check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Verible
+        run: |
+          VERIBLE_VERSION="v0.0-4053-g89d4d98a"
+          wget -q "https://github.com/chipsalliance/verible/releases/download/${VERIBLE_VERSION}/verible-${VERIBLE_VERSION}-linux-static-x86_64.tar.gz" -O verible.tar.gz
+          tar xzf verible.tar.gz
+          sudo cp verible-${VERIBLE_VERSION}/bin/verible-* /usr/local/bin/
+
+      - name: Check formatting
+        run: |
+          make format
+          git diff --exit-code || {
+            echo "::error::Files are not formatted. Run 'make format' locally and commit the changes."
+            exit 1
+          }
