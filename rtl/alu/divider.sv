@@ -55,12 +55,20 @@ module divider (
     if (enable) begin
       // To start the algorithm, the parent should set a, b and is_signed,
       // then bring 'enable' high for one clock cycle.
-      state <= WORKING;
-      counter <= 5'd31;
-      data <= {32'b0, a_sgn ? -a : a};
-      b_latch <= b_sgn ? -b : b;
-      quotient_sgn <= a_sgn ^ b_sgn;
-      remainder_sgn <= a_sgn;
+      if (b == 0) begin
+        // Division by zero (special case): remainder is A, quotient is -1.
+        quotient_sgn <= 0;
+        remainder_sgn <= 0;
+        data <= {a, 32'hffffffff};
+      end else begin
+        // Standard case - set up and enter WORKING state.
+        state <= WORKING;
+        counter <= 5'd31;
+        data <= {32'b0, a_sgn ? -a : a};
+        b_latch <= b_sgn ? -b : b;
+        quotient_sgn <= a_sgn ^ b_sgn;
+        remainder_sgn <= a_sgn;
+      end
     end else if (state == WORKING) begin
       // The WORKING logic runs 32 cycles and then returns to WAITING state,
       // exposing the outputs and setting 'ready' high.      
