@@ -38,18 +38,14 @@ module divider (
   assign ready = (state == WAITING);
 
   // Combinatorial logic for initialisation.
-  always_comb begin
-    a_sgn = is_signed & a[31];
-    b_sgn = is_signed & b[31];
-  end
+  assign a_sgn = is_signed & a[31];
+  assign b_sgn = is_signed & b[31];
 
   // Combinatorial logic for working algorithm.
   logic [63:0] shifted;
   logic [31:0] shifted_rem;
-  always_comb begin
-    shifted = data << 1;
-    shifted_rem = shifted[63:32];
-  end
+  assign shifted = data << 1;
+  assign shifted_rem = shifted[63:32];
 
   always_ff @(posedge clk) begin
     if (enable) begin
@@ -57,6 +53,8 @@ module divider (
       // then bring 'enable' high for one clock cycle.
       if (b == 0) begin
         // Division by zero (special case): remainder is A, quotient is -1.
+        // Abort immediately.
+        state <= WAITING;
         quotient_sgn <= 0;
         remainder_sgn <= 0;
         data <= {a, 32'hffffffff};
