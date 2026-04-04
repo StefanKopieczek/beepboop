@@ -4,25 +4,21 @@ module tb_adder;
   logic [31:0] a;
   logic [31:0] b;
   logic [31:0] out;
-  logic carry;
 
   int pass_count = 0;
   int fail_count = 0;
 
   adder uut (
-      .a(a),
-      .b(b),
-      .out(out),
-      .carry(carry)
+      .a  (a),
+      .b  (b),
+      .out(out)
   );
 
   // --- Helper to check the output, given inputs ---
   task automatic check(input logic [31:0] a, input logic [31:0] b, input logic [31:0] out_expected,
-                       input logic [31:0] out_actual, input logic carry_expected,
-                       input logic carry_actual);
+                       input logic [31:0] out_actual);
     if (out_actual !== out_expected) begin
-      $display("$FAIL: 0x%08x + 0x%08x = %0x08xc%b; expected %0x08xc%b", a, b, out_actual,
-               carry_actual, out_expected, carry_expected);
+      $display("$FAIL: 0x%08x + 0x%08x = %0x08x; expected %0x08x", a, b, out_actual, out_expected);
       fail_count++;
     end else begin
       pass_count++;
@@ -42,7 +38,7 @@ module tb_adder;
     a = 32'd1;
     b = 32'd1;
     #1;
-    check(1, 1, 2, out, 0, carry);
+    check(1, 1, 2, out);
 
     // -----------------------------------------------------------------------
     // Test 2: 0 + 1 = 1
@@ -50,7 +46,7 @@ module tb_adder;
     a = 32'd0;
     b = 32'd1;
     #1;
-    check(0, 1, 1, out, 0, carry);
+    check(0, 1, 1, out);
 
     // -----------------------------------------------------------------------
     // Test 3: 2 + 0 = 2
@@ -58,7 +54,7 @@ module tb_adder;
     a = 32'd2;
     b = 32'd0;
     #1;
-    check(2, 0, 2, out, 0, carry);
+    check(2, 0, 2, out);
 
     // -----------------------------------------------------------------------
     // Test 4: Upper bits, no carry
@@ -66,7 +62,7 @@ module tb_adder;
     a = 32'h80000000;
     b = 32'h7fffffff;
     #1;
-    check(32'h80000000, 32'h7fffffff, 32'hffffffff, out, 0, carry);
+    check(32'h80000000, 32'h7fffffff, 32'hffffffff, out);
 
     // -----------------------------------------------------------------------
     // Test 5: Top bit carry
@@ -74,7 +70,7 @@ module tb_adder;
     a = 32'h80000000;
     b = 32'h80000000;
     #1;
-    check(32'h80000000, 32'h80000000, 32'h00000000, out, 1, carry);
+    check(32'h80000000, 32'h80000000, 32'h00000000, out);
 
     // -----------------------------------------------------------------------
     // Test 6: Ripple carry
@@ -82,7 +78,7 @@ module tb_adder;
     a = 32'hffffffff;
     b = 32'h00000001;
     #1;
-    check('hfffffff, 'h0000001, 'h00000000, out, 1, carry);
+    check('hfffffff, 'h0000001, 'h00000000, out);
 
     // -----------------------------------------------------------------------
     // Test 7: Carry with remainder
@@ -90,7 +86,7 @@ module tb_adder;
     a = 32'hffffffff;
     b = 32'h00000007;
     #1;
-    check('hfffffff, 'h0000007, 'h00000006, out, 1, carry);
+    check('hfffffff, 'h0000007, 'h00000006, out);
 
     // -----------------------------------------------------------------------
     // Summarise results
