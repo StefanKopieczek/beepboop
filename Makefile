@@ -17,8 +17,8 @@ $(SIM_DIR)/tb_%: $(TB_DIR)/tb_%.sv $(RTL_SRC)
 wave-%: $(SIM_DIR)/tb_%
 	gtkwave $(SIM_DIR)/tb_$*.vcd &
 
-lint:
-	verilator --lint-only -I $(RTL_DIR) $(RTL_SRC)
+lint:	
+	verilator --lint-only -Wno-MULTITOP $(addprefix -I,$(shell find $(RTL_DIR) -type d)) $(RTL_SRC)
 
 format:
 	verible-verilog-format --inplace $(RTL_SRC) $(TB_SRC)
