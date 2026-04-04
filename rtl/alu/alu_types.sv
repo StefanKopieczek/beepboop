@@ -21,6 +21,9 @@ package alu_types;
     LT_UNSIGNED,
     LT_SIGNED,
     LTE_UNSIGNED,
-    LTE_SIGNED
+    LTE_SIGNED,
+    SHIFT_LEFT,
+    SHIFT_RIGHT_LOGICAL,
+    SHIFT_RIGHT_ARITHMETIC
   } alu_op_t;
 endpackage

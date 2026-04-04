@@ -36,6 +36,7 @@ module alu (
   logic comparator_out_lt;
   logic comparator_out_gt;
   logic comparator_out_eq;
+  logic [4:0] shift_amount;
 
   // -- Sequential: Latch inputs ------------------------------------------------------------------
   // The ALU top level is mostly combinatoric. We just need to latch the inputs.
@@ -86,6 +87,9 @@ module alu (
       .greater_than(comparator_out_gt),
       .equal(comparator_out_eq)
   );
+
+  // Only the last five bits of the shift amount operand are used in RISC-V.
+  assign shift_amount = b_latch[4:0];
 
   // --- Combinatoric: Derive output --------------------------------------------------------------
   always_comb begin
@@ -141,6 +145,18 @@ module alu (
       LTE_UNSIGNED, LTE_SIGNED: begin
         ready = 1;
         out   = {31'b0, comparator_out_lt | comparator_out_eq};
+      end
+      SHIFT_LEFT: begin
+        ready = 1;
+        out   = a_latch << shift_amount;
+      end
+      SHIFT_RIGHT_LOGICAL: begin
+        ready = 1;
+        out   = a_latch >> shift_amount;
+      end
+      SHIFT_RIGHT_ARITHMETIC: begin
+        ready = 1;
+        out   = signed'(a_latch) >>> shift_amount;
       end
       default: begin
         // If handling an unknown operation, let the output float but assert readiness so the CPU 

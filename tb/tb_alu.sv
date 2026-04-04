@@ -244,6 +244,74 @@ module tb_alu;
     check("XOR self (zero)", 32'd0, out);
 
     // -----------------------------------------------------------------------
+    // SHIFT_LEFT
+    // -----------------------------------------------------------------------
+
+    run_op(32'd1, 32'd4, SHIFT_LEFT);
+    check("1 << 4", 32'd16, out);
+
+    run_op(32'hDEADBEEF, 32'd0, SHIFT_LEFT);
+    check("DEADBEEF << 0 (no shift)", 32'hDEADBEEF, out);
+
+    run_op(32'd1, 32'd31, SHIFT_LEFT);
+    check("1 << 31", 32'h80000000, out);
+
+    // Test: bits shifted out are lost
+    run_op(32'hFFFFFFFF, 32'd16, SHIFT_LEFT);
+    check("0xFFFFFFFF << 16", 32'hFFFF0000, out);
+
+    // Test: only lower 5 bits of shift amount used (RISC-V spec)
+    run_op(32'd1, 32'd32, SHIFT_LEFT);
+    check("1 << 32 (uses amt[4:0]=0)", 32'd1, out);
+
+    // -----------------------------------------------------------------------
+    // SHIFT_RIGHT_LOGICAL
+    // -----------------------------------------------------------------------
+
+    run_op(32'h80000000, 32'd4, SHIFT_RIGHT_LOGICAL);
+    check("0x80000000 >>> 4 logical", 32'h08000000, out);
+
+    run_op(32'hDEADBEEF, 32'd0, SHIFT_RIGHT_LOGICAL);
+    check("DEADBEEF >>> 0 logical (no shift)", 32'hDEADBEEF, out);
+
+    run_op(32'h80000000, 32'd31, SHIFT_RIGHT_LOGICAL);
+    check("0x80000000 >>> 31 logical", 32'd1, out);
+
+    // Test: zero-fills from the left
+    run_op(32'hFFFFFFFF, 32'd16, SHIFT_RIGHT_LOGICAL);
+    check("0xFFFFFFFF >>> 16 logical", 32'h0000FFFF, out);
+
+    // Test: only lower 5 bits of shift amount used
+    run_op(32'hDEADBEEF, 32'd32, SHIFT_RIGHT_LOGICAL);
+    check("DEADBEEF >>> 32 logical (uses amt[4:0]=0)", 32'hDEADBEEF, out);
+
+    // -----------------------------------------------------------------------
+    // SHIFT_RIGHT_ARITHMETIC
+    // -----------------------------------------------------------------------
+
+    // Test: positive value (MSB=0) behaves like logical shift
+    run_op(32'h7FFFFFFF, 32'd4, SHIFT_RIGHT_ARITHMETIC);
+    check("0x7FFFFFFF >> 4 arith (positive)", 32'h07FFFFFF, out);
+
+    // Test: negative value (MSB=1) sign-extends
+    run_op(32'h80000000, 32'd4, SHIFT_RIGHT_ARITHMETIC);
+    check("0x80000000 >> 4 arith (sign ext)", 32'hF8000000, out);
+
+    run_op(32'hFFFFFFFF, 32'd16, SHIFT_RIGHT_ARITHMETIC);
+    check("0xFFFFFFFF >> 16 arith (all ones)", 32'hFFFFFFFF, out);
+
+    run_op(32'h80000000, 32'd31, SHIFT_RIGHT_ARITHMETIC);
+    check("0x80000000 >> 31 arith", 32'hFFFFFFFF, out);
+
+    // Test: no shift preserves value
+    run_op(32'h80000000, 32'd0, SHIFT_RIGHT_ARITHMETIC);
+    check("0x80000000 >> 0 arith (no shift)", 32'h80000000, out);
+
+    // Test: only lower 5 bits of shift amount used
+    run_op(32'h80000000, 32'd32, SHIFT_RIGHT_ARITHMETIC);
+    check("0x80000000 >> 32 arith (uses amt[4:0]=0)", 32'h80000000, out);
+
+    // -----------------------------------------------------------------------
     // EQ
     // -----------------------------------------------------------------------
 
