@@ -1,5 +1,5 @@
 package alu_types;
-  typedef enum logic [31:0] {
+  typedef enum logic [4:0] {
     ADD,
     SUBTRACT,
     MULTIPLY_LOWER,
@@ -12,6 +12,15 @@ package alu_types;
     REMAINDER_SIGNED,
     AND,
     OR,
-    XOR
+    XOR,
+    EQ,
+    GT_UNSIGNED,
+    GT_SIGNED,
+    GTE_UNSIGNED,
+    GTE_SIGNED,
+    LT_UNSIGNED,
+    LT_SIGNED,
+    LTE_UNSIGNED,
+    LTE_SIGNED
   } alu_op_t;
 endpackage
