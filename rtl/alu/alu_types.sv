@@ -1,0 +1,26 @@
+package alu_types;
+  typedef enum logic [4:0] {
+    ADD,
+    SUBTRACT,
+    MULTIPLY_LOWER,
+    MULTIPLY_UPPER_UNSIGNED,
+    MULTIPLY_UPPER_SIGNED,
+    MULTIPLY_UPPER_SIGNED_UNSIGNED,
+    DIVIDE_UNSIGNED,
+    DIVIDE_SIGNED,
+    REMAINDER_UNSIGNED,
+    REMAINDER_SIGNED,
+    AND,
+    OR,
+    XOR,
+    EQ,
+    GT_UNSIGNED,
+    GT_SIGNED,
+    GTE_UNSIGNED,
+    GTE_SIGNED,
+    LT_UNSIGNED,
+    LT_SIGNED,
+    LTE_UNSIGNED,
+    LTE_SIGNED
+  } alu_op_t;
+endpackage
