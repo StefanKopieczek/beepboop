@@ -1,5 +1,6 @@
 {
     "verilog.linting.iverilog.includePath": [
         "rtl"
-    ]
+    ],
+    "verilog.formatting.veribleVerilogFormatter.arguments": "--column_limit 100"
 }

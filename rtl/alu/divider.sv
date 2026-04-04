@@ -7,46 +7,52 @@ module divider (
     output logic [31:0] quotient,
     output logic [31:0] remainder,
     output logic        ready
+
+    // NB: No reset required, because asserting 'enable' will initialise the module from any state.
 );
+  // --- Types and declarations -------------------------------------------------------------------
+  typedef enum logic {
+    WAITING = 1'b0,
+    WORKING = 1'b1
+  } state_t;
 
+  state_t state;
 
-  enum {
-    WAITING,
-    WORKING
-  } state;
-
-  // When working, we go through 32 passes, which
-  // we track using the counter.
+  // When working, we go through 32 passes, which we track using the counter.
   logic [4:0] counter;
 
-  // Defensive guard against B changing during operation:
-  // take a copy when the algorithm starts.
-  // We don't need to latch A because it's immediately copied
-  // into 'data' and then the original input isn't used. 
+  // Defensively latch B to allow the input to change during operations.
+  // We don't need to latch A as the algorithm immediately copies it into 'data'.
   logic [31:0] b_latch;
 
-  // We'll do the algorithm as unsigned division and then adjust the signs at the end.
+  // We'll do unsigned division and then adjust the signs at the end.
+  // - a_sgn, b_sgn are for the inputs.
+  // - quotient_sgn, remainder_sgn are used to adjust the outputs.
   logic a_sgn, b_sgn, quotient_sgn, remainder_sgn;
 
-  // The algorithm acts on 64 contiguous bits, and when
-  // it finishes they will hold {remainder, quotient}.
-  // If doing signed calculation we need to adjust the sign bits.
+  // The algorithm acts on 64 contiguous bits. When it finishes they will hold 
+  // the unsigned {remainder, quotient}.
   logic [63:0] data;
+
+  // --- Output -----------------------------------------------------------------------------------
+  // The algorithm works on unsigned values in data, which will hold {remainder, quotient} once
+  // processing is complete. We adjust the signs at the end as needed.
+  assign ready = (state == WAITING);
   assign remainder[31:0] = remainder_sgn ? -data[63:32] : data[63:32];
   assign quotient[31:0] = quotient_sgn ? -data[31:0] : data[31:0];
 
-  assign ready = (state == WAITING);
-
-  // Combinatorial logic for initialisation.
+  // --- Combinatoric logic -----------------------------------------------------------------------
+  // Operand signs
   assign a_sgn = is_signed & a[31];
   assign b_sgn = is_signed & b[31];
 
-  // Combinatorial logic for working algorithm.
-  logic [63:0] shifted;
-  logic [31:0] shifted_rem;
-  assign shifted = data << 1;
-  assign shifted_rem = shifted[63:32];
+  // Convenience values for bit shifting logic
+  logic [63:0] data_shifted;
+  logic [31:0] rem_candidate;
+  assign data_shifted  = data << 1;
+  assign rem_candidate = data_shifted[63:32];
 
+  // --- Sequential logic -----------------------------------------------------------------------
   always_ff @(posedge clk) begin
     if (enable) begin
       // To start the algorithm, the parent should set a, b and is_signed,
@@ -70,17 +76,17 @@ module divider (
     end else if (state == WORKING) begin
       // The WORKING logic runs 32 cycles and then returns to WAITING state,
       // exposing the outputs and setting 'ready' high.      
-      if (shifted_rem >= b_latch) begin
+      if (rem_candidate >= b_latch) begin
         // The shifted remainder is bigger than the divisor, so
         // we can subtract the divisor and store the new remainder.
         // When we do this we put a 1 in the lower quotient bit.
-        data[63:32] <= (shifted_rem - b_latch);
-        data[31:1] <= shifted[31:1];
+        data[63:32] <= (rem_candidate - b_latch);
+        data[31:1] <= data_shifted[31:1];
         data[0] <= 1;
       end else begin
         // The shifted remainder is not yet bigger than the divisor,
         // so we keep it and put a 0 in the lower quotient bit.
-        data <= shifted;
+        data <= data_shifted;
       end
 
       if (counter > 0) begin
