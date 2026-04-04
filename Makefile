@@ -18,7 +18,7 @@ wave-%: $(SIM_DIR)/tb_%
 	gtkwave $(SIM_DIR)/tb_$*.vcd &
 
 lint:
-	verilator --lint-only -I $(RTL_DIR) $(RTL_SRC)
+	verilator --lint-only -I$(RTL_DIR) $(RTL_SRC)
 
 format:
 	verible-verilog-format --inplace $(RTL_SRC) $(TB_SRC)
