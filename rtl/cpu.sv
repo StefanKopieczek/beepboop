@@ -154,7 +154,7 @@ module cpu #(
     case (state)
       INIT: begin
         // Initial startup, or following a reset.
-        pc = RESET_VECTOR;
+        pc <= RESET_VECTOR;
         state <= REQUEST_INSTR;
       end
       REQUEST_INSTR: begin
