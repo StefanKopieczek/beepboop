@@ -209,8 +209,8 @@ module tb_ram;
 
     // Read different addresses from both ports at the same time
     @(posedge clk);
-    addr_ronly = 31'd6;
-    addr_rw = 31'd7;
+    addr_ronly = 32'd6;
+    addr_rw = 32'd7;
     write_enable = 4'b0000;
     @(posedge clk);
     check("simultaneous: read port reads addr 6", 32'h66666666, dout_ronly);
