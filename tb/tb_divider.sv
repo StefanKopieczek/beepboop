@@ -55,7 +55,7 @@ module tb_divider;
   endtask
 
   initial begin
-    $dumpfile("sim/tb_divider.vcd");
+    $dumpfile("sim/tb_divider.fst");
     $dumpvars(0, tb_divider);
 
     a = 0;

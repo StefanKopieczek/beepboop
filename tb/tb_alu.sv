@@ -54,7 +54,7 @@ module tb_alu;
   endtask
 
   initial begin
-    $dumpfile("sim/tb_alu.vcd");
+    $dumpfile("sim/tb_alu.fst");
     $dumpvars(0, tb_alu);
 
     a = 0;

@@ -33,7 +33,7 @@ module tb_multiplier;
   endtask
 
   initial begin
-    $dumpfile("sim/tb_multiplier.vcd");
+    $dumpfile("sim/tb_multiplier.fst");
     $dumpvars(0, tb_multiplier);
 
     a = 32'd0;

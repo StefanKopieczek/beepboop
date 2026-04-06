@@ -4,11 +4,13 @@ module cpu #(
     parameter MEM_INIT = ""
 ) (
     input  logic clk,
+    input  logic reset,
     output logic running,
     output logic error
 );
   // --- Typedef and declarations -----------------------------------------------------------------
   typedef enum {
+    INIT,
     REQUEST_INSTR,
     DECODE,
     WAIT_FOR_ALU,
@@ -106,8 +108,7 @@ module cpu #(
 
   // --- Initialization ---------------------------------------------------------------------------
   initial begin
-    state = REQUEST_INSTR;
-    pc = RESET_VECTOR;
+    state = INIT;
   end
 
   // --- Instr mux --------------------------------------------------------------------------------
@@ -116,14 +117,17 @@ module cpu #(
   // This makes the decoder output stable, but prevents us needing to wait a cycle for the latch
   // right after the instruction is read.
   assign instr_d = ram_ronly_dout;
-  assign instr   = (state == DECODE) ? instr_d : instr_q;
+  assign instr = (state == DECODE) ? instr_d : instr_q;
+
+  // --- Combinatorial: Reading from memory -------------------------------------------------------
+  assign ram_ronly_addr = pc;
 
   // --- Combinatorial: ALU args ------------------------------------------------------------------
   always_comb begin
     reg_rd_addr_a = instr_reg_a;
     reg_rd_addr_b = instr_reg_b;
     alu_arg_a = reg_rd_data_a;
-    alu_arg_b = (is_immediate_instr) ? reg_rd_data_b : immediate_value;
+    alu_arg_b = (is_immediate_instr) ? immediate_value : reg_rd_data_b;
     alu_op = instr_alu_op;
 
     // Due to latch propagation, this causes ALU processing to start the cycle _after_ we enter
@@ -142,10 +146,19 @@ module cpu #(
 
   // --- Sequential logic -------------------------------------------------------------------------
   always_ff @(posedge clk) begin
+    if (reset) state <= INIT;
+    else tick_state();
+  end
+
+  task automatic tick_state();
     case (state)
+      INIT: begin
+        // Initial startup, or following a reset.
+        pc = RESET_VECTOR;
+        state <= REQUEST_INSTR;
+      end
       REQUEST_INSTR: begin
-        // Request the next instruction from RAM.        
-        ram_ronly_addr <= pc;
+        // Request the next instruction from RAM.            
         state <= DECODE;
       end
       DECODE: begin
@@ -166,7 +179,7 @@ module cpu #(
         end
       end
     endcase
-  end
+  endtask
 
   // --- Outputs ----------------------------------------------------------------------------------
   assign running = (state != FINISHED) && (state != ERROR);

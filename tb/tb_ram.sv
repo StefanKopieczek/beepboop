@@ -81,7 +81,7 @@ module tb_ram;
   endtask
 
   initial begin
-    $dumpfile("sim/tb_ram.vcd");
+    $dumpfile("sim/tb_ram.fst");
     $dumpvars(0, tb_ram);
 
     addr_ronly = 0;
