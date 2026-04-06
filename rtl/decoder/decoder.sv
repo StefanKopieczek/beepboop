@@ -32,6 +32,8 @@ module decoder (
     output logic    [ 4:0] reg_dst,
     output logic    [31:0] immediate,
     output alu_op_t        alu_op,
+    output logic           is_nop,
+    output logic           is_exit,
     output logic           is_valid
 );
 
@@ -121,6 +123,8 @@ module decoder (
       B: imm = {19'b0, instr[31], instr[7], instr[30:25], instr[11:8], 1'b0};
       U: imm = {instr[31:12], 12'b0};
       J: imm = {11'b0, instr[31], instr[19:12], instr[20], instr[30:21], 1'b0};
+      SYSTEM: imm = {20'b0, instr[31:20]};
+      FENCE: imm = 'x;  // Unused for FENCE
     endcase
   end
 
@@ -180,9 +184,19 @@ module decoder (
     end
   end
 
+  // --- System and Fence -------------------------------------------------------------------------
+  // FENCE is a no-op on a single core.
+  // Proper handling of ECALL and EBREAK requires implementing some of the privileged architecture,
+  // which I don't want to do yet. For now I'll treat ECALL as a clean exit and EBREAK as an abort.
+  logic aborted;
+  assign is_nop = (instr_type == FENCE);
+  assign is_exit = (instr_type == SYSTEM);
+  assign aborted = is_exit && imm[0] == 1;  // EBREAK
+
+
   // --- Plumb final outputs ----------------------------------------------------------------------
   assign immediate = is_alu ? alu_immediate : imm;
-  assign is_valid = opcode_is_valid && (!is_alu || alu_op_is_valid);
+  assign is_valid = opcode_is_valid && (!is_alu || alu_op_is_valid) && !aborted;
   assign reg_src_a = rs1;
   assign reg_src_b = rs2;
   assign reg_dst = rd;

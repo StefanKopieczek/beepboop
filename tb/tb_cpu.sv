@@ -5,6 +5,8 @@ module tb_cpu;
   int   pass_count = 0;
   int   fail_count = 0;
 
+  int   ecall = 32'h00000073;
+
   logic clk;
   logic reset;
   logic running;
@@ -69,7 +71,12 @@ module tb_cpu;
     // Set register x1 to 0 by XOR
     // -----------------------------------------------------------------------
     begin : register_x1_to_0_xor
-      static logic [31:0] prog[] = '{32'h0010C0B3};  // XOR x1, x1, x1
+      static
+      logic [31:0]
+      prog[] = '{
+          32'h0010C0B3,  // XOR x1, x1, x1
+          ecall
+      };
       run_program("register_x1_to_0_xor", prog);
       check_register("register_x1_to_0_xor", 1, 0);
     end
@@ -78,7 +85,12 @@ module tb_cpu;
     // Set register x2 to 0 by ADDI x0, 0
     // -----------------------------------------------------------------------
     begin : register_x2_to_0_addi
-      static logic [31:0] prog[] = '{32'h00000113};  // ADDI x2, x0, 0
+      static
+      logic [31:0]
+      prog[] = '{
+          32'h00000113,  // ADDI x2, x0, 0
+          ecall
+      };
       run_program("register_x2_to_0_addi", prog);
       check_register("register_x2_to_0_addi", 2, 0);
     end
@@ -90,7 +102,8 @@ module tb_cpu;
       static
       logic [31:0]
       prog[] = '{
-          32'h01100093  // ADDI x1, x0, 1          
+          32'h01100093,  // ADDI x1, x0, 1          
+          ecall
       };
       run_program("x1_to_17", prog);
       check_register("x1_to_17", 1, 17);
@@ -105,7 +118,8 @@ module tb_cpu;
       prog[] = '{
           32'h00100093,  // ADDI x1, x0, 1
           32'h00200113,  // ADDI x2, x0, 2
-          32'h002081B3  // ADD x3, x1, x2
+          32'h002081B3,  // ADD x3, x1, x2
+          ecall
       };
       run_program("one_plus_one", prog);
       check_register("one_plus_one", 3, 3);
