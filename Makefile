@@ -11,7 +11,7 @@ sim: $(TB_TARGETS)
 
 $(SIM_DIR)/tb_%: $(TB_DIR)/tb_%.sv $(RTL_SRC)
 	@mkdir -p $(SIM_DIR)
-	verilator --binary --trace-fst -Wno-fatal verilator.vlt \
+	verilator --binary --trace-fst --timing -Wno-fatal verilator.vlt \
 		$(addprefix -I,$(shell find $(RTL_DIR) -type d)) \
 		--top-module tb_$* \
 		-o $(abspath $@) --Mdir $(SIM_DIR)/obj_$* \
@@ -22,11 +22,11 @@ wave-%: $(SIM_DIR)/tb_%
 	gtkwave $(SIM_DIR)/tb_$*.fst &
 
 lint-rtl:
-	verilator --lint-only -Wno-MULTITOP verilator.vlt \
+	verilator --lint-only --no-timing -Wno-MULTITOP verilator.vlt \
 		$(addprefix -I,$(shell find $(RTL_DIR) -type d)) $(RTL_SRC)
 
 lint-tests:
-	verilator --lint-only -Wno-MULTITOP verilator.vlt \
+	verilator --lint-only --timing -Wno-MULTITOP verilator.vlt \
 		$(addprefix -I,$(shell find $(RTL_DIR) -type d)) $(RTL_SRC) $(TB_SRC)
 
 lint: lint-rtl lint-tests
