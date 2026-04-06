@@ -98,17 +98,17 @@ module tb_ram;
     // -----------------------------------------------------------------------
 
     // Test: write and read back a word
-    write_word(4'd0, 32'hDEADBEEF);
-    read_b(4'd0);
+    write_word(32'd0, 32'hDEADBEEF);
+    read_b(32'd0);
     check("word write/read addr 0", 32'hDEADBEEF, dout_rw);
 
     // Test: write to a different address
-    write_word(4'd5, 32'hCAFEBABE);
-    read_b(4'd5);
+    write_word(32'd5, 32'hCAFEBABE);
+    read_b(32'd5);
     check("word write/read addr 5", 32'hCAFEBABE, dout_rw);
 
     // Test: previous address is not clobbered
-    read_b(4'd0);
+    read_b(32'd0);
     check("addr 0 still intact", 32'hDEADBEEF, dout_rw);
 
     // -----------------------------------------------------------------------
@@ -116,8 +116,8 @@ module tb_ram;
     // -----------------------------------------------------------------------
     // Tests that values are available to read the cycle after the write
     // (set up for write, write happens on next posedge; set up for read, read on next posedge)
-    write_word(4'b1011, 32'hBABEBABE);
-    addr_ronly = 4'b1011;
+    write_word(32'b1011, 32'hBABEBABE);
+    addr_ronly = 32'b1011;
     @(posedge clk);
     #1;
     check("reads available after one cycle", 32'hBABEBABE, dout_ronly);
@@ -128,10 +128,10 @@ module tb_ram;
     // -----------------------------------------------------------------------
 
     // Test: ronly read of data written by rw
-    read_a(4'd0);
+    read_a(32'd0);
     check("ronly reads addr 0", 32'hDEADBEEF, dout_ronly);
 
-    read_a(4'd5);
+    read_a(32'd5);
     check("ronly reads addr 5", 32'hCAFEBABE, dout_ronly);
 
     // -----------------------------------------------------------------------
@@ -139,42 +139,42 @@ module tb_ram;
     // -----------------------------------------------------------------------
 
     // Seed address 1 with a known pattern, then overwrite individual bytes
-    write_word(4'd1, 32'hAABBCCDD);
+    write_word(32'd1, 32'hAABBCCDD);
 
     // Test: overwrite byte 0 only
-    write_bytes(4'd1, 32'h000000FF, 4'b0001);
-    read_b(4'd1);
+    write_bytes(32'd1, 32'h000000FF, 4'b0001);
+    read_b(32'd1);
     check("sb byte 0", 32'hAABBCCFF, dout_rw);
 
     // Test: overwrite byte 1 only
-    write_bytes(4'd1, 32'h0000EE00, 4'b0010);
-    read_b(4'd1);
+    write_bytes(32'd1, 32'h0000EE00, 4'b0010);
+    read_b(32'd1);
     check("sb byte 1", 32'hAABBEEFF, dout_rw);
 
     // Test: overwrite byte 2 only
-    write_bytes(4'd1, 32'h00110000, 4'b0100);
-    read_b(4'd1);
+    write_bytes(32'd1, 32'h00110000, 4'b0100);
+    read_b(32'd1);
     check("sb byte 2", 32'hAA11EEFF, dout_rw);
 
     // Test: overwrite byte 3 only
-    write_bytes(4'd1, 32'h22000000, 4'b1000);
-    read_b(4'd1);
+    write_bytes(32'd1, 32'h22000000, 4'b1000);
+    read_b(32'd1);
     check("sb byte 3", 32'h2211EEFF, dout_rw);
 
     // -----------------------------------------------------------------------
     // Byte-enable writes (sh — halfword)
     // -----------------------------------------------------------------------
 
-    write_word(4'd2, 32'hFFFFFFFF);
+    write_word(32'd2, 32'hFFFFFFFF);
 
     // Test: overwrite lower halfword
-    write_bytes(4'd2, 32'h00001234, 4'b0011);
-    read_b(4'd2);
+    write_bytes(32'd2, 32'h00001234, 4'b0011);
+    read_b(32'd2);
     check("sh lower half", 32'hFFFF1234, dout_rw);
 
     // Test: overwrite upper halfword
-    write_bytes(4'd2, 32'hABCD0000, 4'b1100);
-    read_b(4'd2);
+    write_bytes(32'd2, 32'hABCD0000, 4'b1100);
+    read_b(32'd2);
     check("sh upper half", 32'hABCD1234, dout_rw);
 
     // -----------------------------------------------------------------------
@@ -184,11 +184,11 @@ module tb_ram;
     // captures the old value of mem[addr_rw] on the same cycle as a write.
     // The new data appears on the following read cycle.
 
-    write_word(4'd3, 32'hAAAAAAAA);  // Seed with a known value
+    write_word(32'd3, 32'hAAAAAAAA);  // Seed with a known value
 
     @(posedge clk);
     write_enable = 4'b1111;
-    addr_rw = 4'd3;
+    addr_rw = 32'd3;
     din = 32'h12345678;
     @(posedge clk);
     write_enable = 4'b0000;
@@ -196,7 +196,7 @@ module tb_ram;
     check("read-first: dout has old value", 32'hAAAAAAAA, dout_rw);
 
     // Now read back to confirm the write did land
-    read_b(4'd3);
+    read_b(32'd3);
     check("read-first: new value on next read", 32'h12345678, dout_rw);
 
     // -----------------------------------------------------------------------
@@ -204,13 +204,13 @@ module tb_ram;
     // -----------------------------------------------------------------------
 
     // Seed two addresses
-    write_word(4'd6, 32'h66666666);
-    write_word(4'd7, 32'h77777777);
+    write_word(32'd6, 32'h66666666);
+    write_word(32'd7, 32'h77777777);
 
     // Read different addresses from both ports at the same time
     @(posedge clk);
-    addr_ronly = 4'd6;
-    addr_rw = 4'd7;
+    addr_ronly = 32'd6;
+    addr_rw = 32'd7;
     write_enable = 4'b0000;
     @(posedge clk);
     check("simultaneous: read port reads addr 6", 32'h66666666, dout_ronly);
@@ -221,39 +221,39 @@ module tb_ram;
     // -----------------------------------------------------------------------
 
     @(posedge clk);
-    addr_ronly = 4'd6;  // Read port reads addr 6
+    addr_ronly = 32'd6;  // Read port reads addr 6
     write_enable = 4'b1111;  // RW port writes addr 8
-    addr_rw = 4'd8;
+    addr_rw = 32'd8;
     din = 32'hBEEFBEEF;
     @(posedge clk);
     write_enable = 4'b0000;
     check("read port undisturbed during RW port write", 32'h66666666, dout_ronly);
 
     // Verify the write landed
-    read_b(4'd8);
+    read_b(32'd8);
     check("RW port write landed at addr 8", 32'hBEEFBEEF, dout_rw);
 
     // -----------------------------------------------------------------------
     // Byte-enable with no bits set (no-op write)
     // -----------------------------------------------------------------------
 
-    write_word(4'd9, 32'h99999999);
-    write_bytes(4'd9, 32'h00000000, 4'b0000);
-    read_b(4'd9);
+    write_word(32'd9, 32'h99999999);
+    write_bytes(32'd9, 32'h00000000, 4'b0000);
+    read_b(32'd9);
     check("zero byte-enable is a no-op", 32'h99999999, dout_rw);
 
     // -----------------------------------------------------------------------
     // Overwrite same address multiple times
     // -----------------------------------------------------------------------
 
-    write_word(4'd10, 32'h11111111);
-    write_word(4'd10, 32'h22222222);
-    write_word(4'd10, 32'h33333333);
-    read_b(4'd10);
+    write_word(32'd10, 32'h11111111);
+    write_word(32'd10, 32'h22222222);
+    write_word(32'd10, 32'h33333333);
+    read_b(32'd10);
     check("triple overwrite keeps last value", 32'h33333333, dout_rw);
 
     // Confirm via read port
-    read_a(4'd10);
+    read_a(32'd10);
     check("triple overwrite via port A", 32'h33333333, dout_ronly);
 
 
