@@ -24,6 +24,7 @@ package alu_types;
     LTE_SIGNED,
     SHIFT_LEFT,
     SHIFT_RIGHT_LOGICAL,
-    SHIFT_RIGHT_ARITHMETIC
+    SHIFT_RIGHT_ARITHMETIC,
+    UNKNOWN_ALU_OP
   } alu_op_t;
 endpackage

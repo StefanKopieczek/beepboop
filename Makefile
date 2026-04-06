@@ -2,7 +2,8 @@ RTL_DIR = rtl
 TB_DIR  = tb
 SIM_DIR = sim
 
-RTL_SRC = $(shell find $(RTL_DIR) -name '*.sv')
+PKG_SRC = $(shell find $(RTL_DIR) -name '*_pkg.sv')
+RTL_SRC = $(PKG_SRC) $(shell find $(RTL_DIR) -name '*.sv' ! -name '*_pkg.sv')
 TB_SRC = $(shell find $(TB_DIR) -name 'tb_*.sv')
 TB_TARGETS = $(patsubst $(TB_DIR)/tb_%.sv,$(SIM_DIR)/tb_%,$(TB_SRC))
 
