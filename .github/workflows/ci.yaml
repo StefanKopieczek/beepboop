@@ -13,13 +13,14 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Install Icarus Verilog
+      - name: Install Verilator
         run: |
           sudo apt-get update
-          sudo apt-get install -y iverilog
+          sudo apt-get install -y verilator
 
       - name: Run testbenches
         run: |
+          set -o pipefail
           make sim 2>&1 | tee sim.log
           if grep -q "FAIL" sim.log; then
             echo "::error::One or more testbenches reported FAIL"
