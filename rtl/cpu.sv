@@ -42,6 +42,8 @@ module cpu #(
   logic       [ 4:0] instr_reg_dst;
   logic       [31:0] immediate_value;
   alu_op_t           instr_alu_op;
+  logic              instr_is_nop;
+  logic              instr_is_exit;
   logic              instr_is_valid;
 
   // ALU parameters
@@ -91,6 +93,8 @@ module cpu #(
       .reg_dst(instr_reg_dst),
       .immediate(immediate_value),
       .alu_op(instr_alu_op),
+      .is_nop(instr_is_nop),
+      .is_exit(instr_is_exit),
       .is_valid(instr_is_valid)
   );
 
@@ -163,7 +167,9 @@ module cpu #(
       end
       DECODE: begin
         instr_q <= instr_d;
-        if (is_alu_instr) begin
+        if (!instr_is_valid) state <= ERROR;
+        else if (instr_is_exit) state <= FINISHED;
+        else if (is_alu_instr) begin
           // The ALU is loaded combinatorially so we just need to wait for ALU ready state
           state <= WAIT_FOR_ALU;
         end else begin
