@@ -184,7 +184,7 @@ module tb_ram;
     // captures the old value of mem[addr_rw] on the same cycle as a write.
     // The new data appears on the following read cycle.
 
-    write_word(4'd3, 32'hAAAAAAAA);  // Seed with a known value
+    write_word(32'd3, 32'hAAAAAAAA);  // Seed with a known value
 
     @(posedge clk);
     write_enable = 4'b1111;
@@ -204,8 +204,8 @@ module tb_ram;
     // -----------------------------------------------------------------------
 
     // Seed two addresses
-    write_word(4'd6, 32'h66666666);
-    write_word(4'd7, 32'h77777777);
+    write_word(32'd6, 32'h66666666);
+    write_word(32'd7, 32'h77777777);
 
     // Read different addresses from both ports at the same time
     @(posedge clk);
@@ -237,7 +237,7 @@ module tb_ram;
     // Byte-enable with no bits set (no-op write)
     // -----------------------------------------------------------------------
 
-    write_word(4'd9, 32'h99999999);
+    write_word(32'd9, 32'h99999999);
     write_bytes(32'd9, 32'h00000000, 4'b0000);
     read_b(32'd9);
     check("zero byte-enable is a no-op", 32'h99999999, dout_rw);
@@ -246,9 +246,9 @@ module tb_ram;
     // Overwrite same address multiple times
     // -----------------------------------------------------------------------
 
-    write_word(4'd10, 32'h11111111);
-    write_word(4'd10, 32'h22222222);
-    write_word(4'd10, 32'h33333333);
+    write_word(32'd10, 32'h11111111);
+    write_word(32'd10, 32'h22222222);
+    write_word(32'd10, 32'h33333333);
     read_b(32'd10);
     check("triple overwrite keeps last value", 32'h33333333, dout_rw);
 
