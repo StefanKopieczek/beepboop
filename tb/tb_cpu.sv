@@ -69,7 +69,7 @@ module tb_cpu;
     // Set register x1 to 0 by XOR
     // -----------------------------------------------------------------------
     begin : register_x1_to_0_xor
-      logic [31:0] prog[] = '{32'h0010C0B3};  // XOR x1, x1, x1
+      static logic [31:0] prog[] = '{32'h0010C0B3};  // XOR x1, x1, x1
       run_program("register_x1_to_0_xor", prog);
       check_register("register_x1_to_0_xor", 1, 0);
     end
@@ -78,7 +78,7 @@ module tb_cpu;
     // Set register x2 to 0 by ADDI x0, 0
     // -----------------------------------------------------------------------
     begin : register_x2_to_0_addi
-      logic [31:0] prog[] = '{32'h00000113};  // ADDI x2, x0, 0
+      static logic [31:0] prog[] = '{32'h00000113};  // ADDI x2, x0, 0
       run_program("register_x2_to_0_addi", prog);
       check_register("register_x2_to_0_addi", 2, 0);
     end
@@ -87,7 +87,9 @@ module tb_cpu;
     // Set register x1 to 17 by ADDI x0, 17
     // -----------------------------------------------------------------------
     begin : x1_to_17
-      logic [31:0] prog[] = '{
+      static
+      logic [31:0]
+      prog[] = '{
           32'h01100093  // ADDI x1, x0, 1          
       };
       run_program("x1_to_17", prog);
@@ -98,7 +100,9 @@ module tb_cpu;
     // 1 + 2 = 3
     // -----------------------------------------------------------------------
     begin : one_plus_one
-      logic [31:0] prog[] = '{
+      static
+      logic [31:0]
+      prog[] = '{
           32'h00100093,  // ADDI x1, x0, 1
           32'h00200113,  // ADDI x2, x0, 2
           32'h002081B3  // ADD x3, x1, x2
