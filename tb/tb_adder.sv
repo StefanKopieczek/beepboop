@@ -26,7 +26,7 @@ module tb_adder;
   endtask
 
   initial begin
-    $dumpfile("sim/tb_adder.vcd");
+    $dumpfile("sim/tb_adder.fst");
     $dumpvars(0, tb_adder);
 
     a = 32'd0;

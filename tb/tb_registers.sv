@@ -40,7 +40,7 @@ module tb_registers;
   endtask
 
   initial begin
-    $dumpfile("sim/tb_registers.vcd");
+    $dumpfile("sim/tb_registers.fst");
     $dumpvars(0, tb_registers);
 
     wr_en = 0;

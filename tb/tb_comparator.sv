@@ -33,7 +33,7 @@ module tb_comparator;
   endtask
 
   initial begin
-    $dumpfile("sim/tb_comparator.vcd");
+    $dumpfile("sim/tb_comparator.fst");
     $dumpvars(0, tb_comparator);
 
     a = 32'd0;
