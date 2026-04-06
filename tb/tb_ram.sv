@@ -188,7 +188,7 @@ module tb_ram;
 
     @(posedge clk);
     write_enable = 4'b1111;
-    addr_rw = 4'd3;
+    addr_rw = 32'd3;
     din = 32'h12345678;
     @(posedge clk);
     write_enable = 4'b0000;
@@ -209,8 +209,8 @@ module tb_ram;
 
     // Read different addresses from both ports at the same time
     @(posedge clk);
-    addr_ronly = 4'd6;
-    addr_rw = 4'd7;
+    addr_ronly = 31'd6;
+    addr_rw = 31'd7;
     write_enable = 4'b0000;
     @(posedge clk);
     check("simultaneous: read port reads addr 6", 32'h66666666, dout_ronly);
@@ -221,9 +221,9 @@ module tb_ram;
     // -----------------------------------------------------------------------
 
     @(posedge clk);
-    addr_ronly = 4'd6;  // Read port reads addr 6
+    addr_ronly = 32'd6;  // Read port reads addr 6
     write_enable = 4'b1111;  // RW port writes addr 8
-    addr_rw = 4'd8;
+    addr_rw = 32'd8;
     din = 32'hBEEFBEEF;
     @(posedge clk);
     write_enable = 4'b0000;
@@ -253,7 +253,7 @@ module tb_ram;
     check("triple overwrite keeps last value", 32'h33333333, dout_rw);
 
     // Confirm via read port
-    read_a(4'd10);
+    read_a(32'd10);
     check("triple overwrite via port A", 32'h33333333, dout_ronly);
 
 
