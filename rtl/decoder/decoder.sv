@@ -130,13 +130,14 @@ module decoder (
 
   // --- Handle ALU ops ---------------------------------------------------------------------------
   logic alu_is_immediate;
-  logic [6:0] funct7_if_not_immediate = {7{!alu_is_immediate}} & funct7;
+  logic [6:0] funct7_if_not_immediate;
   logic [31:0] alu_immediate;
   logic alu_op_is_valid;
   always_comb begin
     if (opcode == 7'b0110011 || opcode == 7'b0010011) begin
       is_alu = 1;
       alu_is_immediate = (instr_type == I);
+      funct7_if_not_immediate = {7{!alu_is_immediate}} & funct7;
 
       // Pick out the ALU op.
       case ({
@@ -156,6 +157,10 @@ module decoder (
         11'b00000001001: alu_op = MULTIPLY_UPPER_SIGNED;
         11'b00000001010: alu_op = MULTIPLY_UPPER_SIGNED_UNSIGNED;
         11'b00000001011: alu_op = MULTIPLY_UPPER_UNSIGNED;
+        11'b00000001100: alu_op = DIVIDE_SIGNED;
+        11'b00000001101: alu_op = DIVIDE_UNSIGNED;
+        11'b00000001110: alu_op = REMAINDER_SIGNED;
+        11'b00000001111: alu_op = REMAINDER_UNSIGNED;
         11'b10000000000: alu_op = ADD;
         11'b10000000010: alu_op = LT_SIGNED;
         11'b10000000011: alu_op = LT_UNSIGNED;
@@ -181,6 +186,7 @@ module decoder (
       alu_op = UNKNOWN_ALU_OP;
       alu_op_is_valid = 'x;
       alu_immediate = 'x;
+      funct7_if_not_immediate = 'x;
     end
   end
 

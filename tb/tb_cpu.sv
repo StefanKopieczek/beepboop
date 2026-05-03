@@ -135,10 +135,10 @@ module tb_cpu;
           32'h06400f93,  // ADDI x31, x0, 100
           32'h00300093,  // ADDI x1, x0, 3
           32'h021fc233,  // DIV x4, x31, x1
-          32'h021fe2b3  // REM x5, x31
+          32'h021fe2b3  // REM x5, x31, x1
       };
       run_program("a_hundred_divided_by_3", prog);
-      check_register("a_hundred_divided_by_3 (quot)", 4, 3);
+      check_register("a_hundred_divided_by_3 (quot)", 4, 33);
       check_register("a_hundred_divided_by_3 (rem)", 5, 1);
     end
 
