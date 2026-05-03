@@ -1,5 +1,6 @@
 
 import alu_types::*;
+import jump_types::*;
 
 // --- 32-Bit Instructions ------------------------------------------------------------------------
 // Source: RISC-V Unprivileged Architecture s2.2
@@ -24,17 +25,19 @@ import alu_types::*;
 // ------------------------------------------------------------------------------------------------
 
 module decoder (
-    input  logic    [31:0] instr,
-    output logic           is_alu,
-    output logic           is_immediate,
-    output logic    [ 4:0] reg_src_a,
-    output logic    [ 4:0] reg_src_b,
-    output logic    [ 4:0] reg_dst,
-    output logic    [31:0] immediate,
-    output alu_op_t        alu_op,
-    output logic           is_nop,
-    output logic           is_exit,
-    output logic           is_valid
+    input  logic       [31:0] instr,
+    output logic              is_alu,
+    output logic              is_immediate,
+    output logic       [ 4:0] reg_src_a,
+    output logic       [ 4:0] reg_src_b,
+    output logic       [ 4:0] reg_dst,
+    output logic       [31:0] immediate,
+    output alu_op_t           alu_op,
+    output logic              is_branch,
+    output jump_type_t        jump_type,
+    output logic              is_nop,
+    output logic              is_exit,
+    output logic              is_valid
 );
 
   typedef enum {
@@ -136,6 +139,8 @@ module decoder (
   always_comb begin
     if (opcode == 7'b0110011 || opcode == 7'b0010011) begin
       is_alu = 1;
+      is_branch = 0;
+      jump_type = NONE;
       alu_is_immediate = (instr_type == I);
       funct7_if_not_immediate = {7{!alu_is_immediate}} & funct7;
 
@@ -180,13 +185,37 @@ module decoder (
         if (funct3 == 3'b001 || funct3 == 3'b101) alu_immediate = {27'b0, imm[4:0]};
         else alu_immediate = imm;
       end else alu_immediate = 'x;
+    end else if (instr_type == B) begin
+      is_alu = 0;
+      alu_is_immediate = 'x;
+      alu_op_is_valid = 'x;
+      funct7_if_not_immediate = 'x;
+
+      is_branch = 1'b1;
+      jump_type = NONE;
+
+      // TODO set these to match the branch
+      alu_immediate = 'x;
+      alu_op = UNKNOWN_ALU_OP;
+    end else if (instr_type == J) begin
+      is_alu = 0;
+      alu_is_immediate = 'x;
+      alu_op_is_valid = 'x;
+      funct7_if_not_immediate = 'x;
+      alu_immediate = 'x;
+      alu_op = UNKNOWN_ALU_OP;
+
+      is_branch = 0;
+      jump_type = NONE;  // TODO set this    
     end else begin
       is_alu = 0;
+      is_branch = 0;
       alu_is_immediate = 'x;
       alu_op = UNKNOWN_ALU_OP;
       alu_op_is_valid = 'x;
       alu_immediate = 'x;
       funct7_if_not_immediate = 'x;
+      jump_type = NONE;
     end
   end
 
