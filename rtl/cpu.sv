@@ -132,7 +132,7 @@ module cpu #(
   assign instr = (state == DECODE) ? instr_d : instr_q;
 
   // --- Combinatorial: Reading from memory -------------------------------------------------------
-  assign ram_ronly_addr = pc;
+  assign ram_ronly_addr = pc >> 2;
 
   // --- Combinatorial: ALU args ------------------------------------------------------------------
   always_comb begin
@@ -194,7 +194,7 @@ module cpu #(
       end
       WAIT_FOR_ALU: begin
         if (alu_ready) begin
-          pc <= pc + 1;
+          pc <= pc + 4;
           state <= REQUEST_INSTR;
         end
       end
@@ -203,10 +203,10 @@ module cpu #(
           state <= REQUEST_INSTR;
           if (alu_out == 32'b1) begin
             // Branch condition met - go to PC + immediate.
-            pc <= pc + (immediate_value >>> 2);
+            pc <= pc + immediate_value;
           end else begin
             // Branch condition failed - step forward as normal.
-            pc <= pc + 1;
+            pc <= pc + 4;
           end
         end
       end
