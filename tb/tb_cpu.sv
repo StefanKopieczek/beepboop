@@ -34,7 +34,7 @@ module tb_cpu;
 
     // Load in the program
     @(posedge clk);
-    for (int i = 0; i < prog.size(); i++) uut.u_ram.mem[uut.RESET_VECTOR+i] = prog[i];
+    for (int i = 0; i < prog.size(); i++) uut.u_ram.mem[(uut.RESET_VECTOR>>2)+i] = prog[i];
 
     // Allow the CPU to restart, and wait for it to finish running or for 1000 cycles.
     reset  = 0;
