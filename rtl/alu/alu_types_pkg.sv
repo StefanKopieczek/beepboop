@@ -14,6 +14,7 @@ package alu_types;
     OR,
     XOR,
     EQ,
+    NEQ,
     GT_UNSIGNED,
     GT_SIGNED,
     GTE_UNSIGNED,

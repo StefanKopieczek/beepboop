@@ -1,3 +1,6 @@
+import alu_types::*;
+import jump_types::*;
+
 module cpu #(
     parameter MEMORY_WIDTH = 14,
     parameter RESET_VECTOR = 32'h100,
@@ -14,53 +17,56 @@ module cpu #(
     REQUEST_INSTR,
     DECODE,
     WAIT_FOR_ALU,
+    EVALUATE_BRANCH,
     FINISHED,
     ERROR
   } cpu_state_t;
 
   // CPU state variables
-  cpu_state_t        state;
-  logic       [31:0] pc;
+  cpu_state_t         state;
+  logic        [31:0] pc;
 
   // Registers
-  logic       [ 4:0] reg_rd_addr_a;
-  logic       [ 4:0] reg_rd_addr_b;
-  logic       [31:0] reg_rd_data_a;
-  logic       [31:0] reg_rd_data_b;
-  logic              reg_wr_enable;
-  logic       [ 4:0] reg_wr_addr;
-  logic       [31:0] reg_wr_data;
+  logic        [ 4:0] reg_rd_addr_a;
+  logic        [ 4:0] reg_rd_addr_b;
+  logic        [31:0] reg_rd_data_a;
+  logic        [31:0] reg_rd_data_b;
+  logic               reg_wr_enable;
+  logic        [ 4:0] reg_wr_addr;
+  logic        [31:0] reg_wr_data;
 
   // Decoder output
-  logic       [31:0] instr_d;  // Synonym for ram_ronly_dout
-  logic       [31:0] instr_q;  // Latched after reading instr_d
-  logic       [31:0] instr;  // Mux of instr_d and instr_q; using instr_q alone wastes a cycle.
-  logic              is_alu_instr;
-  logic              is_immediate_instr;
-  logic       [ 4:0] instr_reg_a;
-  logic       [ 4:0] instr_reg_b;
-  logic       [ 4:0] instr_reg_dst;
-  logic       [31:0] immediate_value;
-  alu_op_t           instr_alu_op;
-  logic              instr_is_nop;
-  logic              instr_is_exit;
-  logic              instr_is_valid;
+  logic        [31:0] instr_d;  // Synonym for ram_ronly_dout
+  logic        [31:0] instr_q;  // Latched after reading instr_d
+  logic        [31:0] instr;  // Mux of instr_d and instr_q; using instr_q alone wastes a cycle.
+  logic               is_alu_instr;
+  logic               is_immediate_instr;
+  logic        [ 4:0] instr_reg_a;
+  logic        [ 4:0] instr_reg_b;
+  logic        [ 4:0] instr_reg_dst;
+  logic signed [31:0] immediate_value;
+  alu_op_t            instr_alu_op;
+  jump_type_t         instr_jump_type;
+  logic               instr_is_branch;
+  logic               instr_is_nop;
+  logic               instr_is_exit;
+  logic               instr_is_valid;
 
   // ALU parameters
-  logic              alu_enable;
-  alu_op_t           alu_op;
-  logic       [31:0] alu_arg_a;
-  logic       [31:0] alu_arg_b;
-  logic       [31:0] alu_out;
-  logic              alu_ready;
+  logic               alu_enable;
+  alu_op_t            alu_op;
+  logic        [31:0] alu_arg_a;
+  logic        [31:0] alu_arg_b;
+  logic        [31:0] alu_out;
+  logic               alu_ready;
 
   // RAM
-  logic       [31:0] ram_ronly_addr;
-  logic       [31:0] ram_ronly_dout;
-  logic       [31:0] ram_rw_addr;
-  logic       [31:0] ram_din;
-  logic       [31:0] ram_rw_dout;
-  logic       [ 3:0] ram_write_enable;
+  logic        [31:0] ram_ronly_addr;
+  logic        [31:0] ram_ronly_dout;
+  logic        [31:0] ram_rw_addr;
+  logic        [31:0] ram_din;
+  logic        [31:0] ram_rw_dout;
+  logic        [ 3:0] ram_write_enable;
 
   // --- Submodule wiring -------------------------------------------------------------------------
   registers u_registers (
@@ -95,7 +101,9 @@ module cpu #(
       .alu_op(instr_alu_op),
       .is_nop(instr_is_nop),
       .is_exit(instr_is_exit),
-      .is_valid(instr_is_valid)
+      .is_valid(instr_is_valid),
+      .is_branch(instr_is_branch),
+      .jump_type(instr_jump_type)
   );
 
   ram #(
@@ -124,7 +132,7 @@ module cpu #(
   assign instr = (state == DECODE) ? instr_d : instr_q;
 
   // --- Combinatorial: Reading from memory -------------------------------------------------------
-  assign ram_ronly_addr = pc;
+  assign ram_ronly_addr = pc >> 2;
 
   // --- Combinatorial: ALU args ------------------------------------------------------------------
   always_comb begin
@@ -134,8 +142,10 @@ module cpu #(
     alu_arg_b = (is_immediate_instr) ? immediate_value : reg_rd_data_b;
     alu_op = instr_alu_op;
 
-    // Due to latch propagation, this causes ALU processing to start the cycle _after_ we enter
+    // Due to latch propagation, this causes ALU processing to start the cycle _after_ we enter 
     // decode.
+    // Note that it's important that we set alu_enable even when the instruction isn't an ALU op,
+    // because we also use it for e.g. evaluating branches.
     alu_enable = (state == DECODE);
   end
 
@@ -172,6 +182,10 @@ module cpu #(
         else if (is_alu_instr) begin
           // The ALU is loaded combinatorially so we just need to wait for ALU ready state
           state <= WAIT_FOR_ALU;
+        end else if (instr_is_branch) begin
+          // We reuse the comparator in the ALU to calculate
+          // whether to branch.           
+          state <= EVALUATE_BRANCH;
         end else begin
           // Not supported yet
           // TODO extend this when we have other operations
@@ -180,8 +194,20 @@ module cpu #(
       end
       WAIT_FOR_ALU: begin
         if (alu_ready) begin
-          pc <= pc + 1;
+          pc <= pc + 4;
           state <= REQUEST_INSTR;
+        end
+      end
+      EVALUATE_BRANCH: begin
+        if (alu_ready) begin
+          state <= REQUEST_INSTR;
+          if (alu_out == 32'b1) begin
+            // Branch condition met - go to PC + immediate.
+            pc <= pc + immediate_value;
+          end else begin
+            // Branch condition failed - step forward as normal.
+            pc <= pc + 4;
+          end
         end
       end
     endcase
