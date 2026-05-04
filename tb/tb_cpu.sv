@@ -1,7 +1,6 @@
 `timescale 1ns / 1ps
 
 module tb_cpu;
-
   int   pass_count = 0;
   int   fail_count = 0;
 
@@ -26,6 +25,9 @@ module tb_cpu;
   // Task allowing a program to be run
   task automatic run_program(input string label, input logic [31:0] prog[]);
     automatic int cycles;
+
+    $display("[%0t] Starting test: %s", $time, label);
+
     // Ensure the CPU is in reset state before mucking with the memory.
     @(posedge clk);
     reset = 1;
@@ -135,13 +137,54 @@ module tb_cpu;
           32'h06400f93,  // ADDI x31, x0, 100
           32'h00300093,  // ADDI x1, x0, 3
           32'h021fc233,  // DIV x4, x31, x1
-          32'h021fe2b3  // REM x5, x31, x1
+          32'h021fe2b3,  // REM x5, x31, x1
+          ecall
       };
       run_program("a_hundred_divided_by_3", prog);
       check_register("a_hundred_divided_by_3 (quot)", 4, 33);
       check_register("a_hundred_divided_by_3 (rem)", 5, 1);
     end
 
+    // -----------------------------------------------------------------------
+    // Count to 100.
+    // -----------------------------------------------------------------------
+    begin : count_to_100
+      static
+      logic [31:0]
+      prog[] = '{
+          32'h0010c0b3,  // XOR x1, x1, x1
+          32'h06400113,  // ADDI x2, x0, 100
+          // loop:
+          32'h00108093,  // ADDI x1, x1, 1
+          32'hfe20cee3,  // BLT x1, x2, loop
+          ecall
+      };
+      run_program("count_to_100", prog);
+      check_register("count_to_100", 1, 100);
+    end
+
+    // -----------------------------------------------------------------------
+    // Calculate the 20th Fibonnaci number, F20 = 6765.
+    // -----------------------------------------------------------------------
+    begin : fib_20
+      static
+      logic [31:0]
+      prog[] = '{
+          32'h00000293,  // ADDI x5, x0, 0      (F(i-1) = 0)
+          32'h00100313,  // ADDI x6, x0, 1      (F(i)   = 1)
+          32'h00100e13,  // ADDI x28, x0, 1     (i = 1)
+          32'h01400e93,  // ADDI x29, x0, 20    (n = 20)
+          // loop:
+          32'h006283b3,  // ADD  x7, x5, x6
+          32'h000302b3,  // ADD  x5, x6, x0
+          32'h00038333,  // ADD  x6, x7, x0
+          32'h001e0e13,  // ADDI x28, x28, 1
+          32'hffde18e3,  // BNE  x28, x29, loop
+          ecall
+      };
+      run_program("fib_20", prog);
+      check_register("fib_20", 6, 6765);
+    end
 
     // -----------------------------------------------------------------------
     // Summarise results

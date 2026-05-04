@@ -1,4 +1,4 @@
-package jump_type_t;
+package jump_types;
   typedef enum logic [4:0] {
     NONE,
     JAL,

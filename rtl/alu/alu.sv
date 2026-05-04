@@ -130,6 +130,10 @@ module alu (
         ready = 1;
         out   = {31'b0, comparator_out_eq};
       end
+      NEQ: begin
+        ready = 1;
+        out   = {31'b0, ~comparator_out_eq};
+      end
       GT_UNSIGNED, GT_SIGNED: begin
         ready = 1;
         out   = {31'b0, comparator_out_gt};

@@ -25,19 +25,19 @@ import jump_types::*;
 // ------------------------------------------------------------------------------------------------
 
 module decoder (
-    input  logic       [31:0] instr,
-    output logic              is_alu,
-    output logic              is_immediate,
-    output logic       [ 4:0] reg_src_a,
-    output logic       [ 4:0] reg_src_b,
-    output logic       [ 4:0] reg_dst,
-    output logic       [31:0] immediate,
-    output alu_op_t           alu_op,
-    output logic              is_branch,
-    output jump_type_t        jump_type,
-    output logic              is_nop,
-    output logic              is_exit,
-    output logic              is_valid
+    input  logic        [31:0] instr,
+    output logic               is_alu,
+    output logic               is_immediate,
+    output logic        [ 4:0] reg_src_a,
+    output logic        [ 4:0] reg_src_b,
+    output logic        [ 4:0] reg_dst,
+    output logic signed [31:0] immediate,
+    output alu_op_t            alu_op,
+    output logic               is_branch,
+    output jump_type_t         jump_type,
+    output logic               is_nop,
+    output logic               is_exit,
+    output logic               is_valid
 );
 
   typedef enum {
@@ -96,11 +96,11 @@ module decoder (
   end
 
   // --- Extract the fields -----------------------------------------------------------------------  
-  logic [ 6:0] funct7;  // R only
-  logic [ 4:0] rs2;  // R, S, and B
-  logic [ 4:0] rs1;  // R, I, S, B
-  logic [ 2:0] funct3;  // R, I, S, B
-  logic [ 4:0] rd;  // R, I, U, J
+  logic [6:0] funct7;  // R only
+  logic [4:0] rs2;  // R, S, and B
+  logic [4:0] rs1;  // R, I, S, B
+  logic [2:0] funct3;  // R, I, S, B
+  logic [4:0] rd;  // R, I, U, J
 
   // R: absent
   // I: 12 bits
@@ -108,7 +108,7 @@ module decoder (
   // B: 13 bits, LSB always 0
   // U: 32 bits
   // J: 21 bits
-  logic [31:0] imm;
+  logic signed [31:0] imm;
 
   always_comb begin
     // RISC-V helpfully puts most fields at the same position regardless of the op type.
@@ -121,12 +121,12 @@ module decoder (
 
     case (instr_type)
       R: imm = 'x;  // Unused for R-type
-      I: imm = {20'b0, instr[31:20]};
-      S: imm = {20'b0, instr[31:25], instr[11:7]};
-      B: imm = {19'b0, instr[31], instr[7], instr[30:25], instr[11:8], 1'b0};
+      I: imm = {{20{instr[31]}}, instr[31:20]};
+      S: imm = {{20{instr[31]}}, instr[31:25], instr[11:7]};
+      B: imm = {{19{instr[31]}}, instr[31], instr[7], instr[30:25], instr[11:8], 1'b0};
       U: imm = {instr[31:12], 12'b0};
-      J: imm = {11'b0, instr[31], instr[19:12], instr[20], instr[30:21], 1'b0};
-      SYSTEM: imm = {20'b0, instr[31:20]};
+      J: imm = {{11{instr[31]}}, instr[31], instr[19:12], instr[20], instr[30:21], 1'b0};
+      SYSTEM: imm = {{20{instr[31]}}, instr[31:20]};
       FENCE: imm = 'x;  // Unused for FENCE
     endcase
   end
@@ -186,17 +186,26 @@ module decoder (
         else alu_immediate = imm;
       end else alu_immediate = 'x;
     end else if (instr_type == B) begin
-      is_alu = 0;
+      // Unused
       alu_is_immediate = 'x;
+      alu_immediate = 'x;
       alu_op_is_valid = 'x;
       funct7_if_not_immediate = 'x;
 
+      // Instruction type
+      is_alu = 0;
       is_branch = 1'b1;
       jump_type = NONE;
 
-      // TODO set these to match the branch
-      alu_immediate = 'x;
-      alu_op = UNKNOWN_ALU_OP;
+      case (funct3)
+        3'b000:  alu_op = EQ;  // BEQ
+        3'b001:  alu_op = NEQ;  // BNE
+        3'b100:  alu_op = LT_SIGNED;  // BLT
+        3'b101:  alu_op = GTE_SIGNED;  // BGE
+        3'b110:  alu_op = LT_UNSIGNED;  // BLTU
+        3'b111:  alu_op = GTE_UNSIGNED;  // BGEU
+        default: alu_op = UNKNOWN_ALU_OP;
+      endcase
     end else if (instr_type == J) begin
       is_alu = 0;
       alu_is_immediate = 'x;
